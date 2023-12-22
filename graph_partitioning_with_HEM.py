@@ -1,10 +1,12 @@
 import networkx as nx
 import random
 
+
 def add_default_weights(graph, default_weight=1):
     for u, v in graph.edges():
         if 'weight' not in graph[u][v]:
             graph[u][v]['weight'] = default_weight
+
 
 def coarsen_graph(graph):
     add_default_weights(graph)  # Ensure the graph is weighted
@@ -94,6 +96,10 @@ def partition_coarsened_graph(coarsened_graph, k):
         partitions[best_partition].add(node)
 
     return partitions
+
+
+def uncoarsen_and_refine(original_graph, coarsened_graph, partitions):
+    pass
 
 
 # Example usage
