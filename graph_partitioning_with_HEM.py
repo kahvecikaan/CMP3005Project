@@ -137,8 +137,8 @@ def multiway_partition(G, num_partitions):
 
 
 # Main Execution
-g = nx.erdos_renyi_graph(150, 0.3, 23)
-num_partitions = 4  # Define the number of partitions
+g = nx.erdos_renyi_graph(513, 0.3, 23)
+num_partitions = 5  # Define the number of partitions
 final_partitions, total_edge_cuts = multiway_partition(g, num_partitions)
 
 print("Final Partitions:", final_partitions)
