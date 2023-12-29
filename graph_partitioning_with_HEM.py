@@ -1,5 +1,7 @@
 import random
 import networkx as nx
+import pandas as pd
+import save_results as sr
 
 
 # Assign default weights to unweighted graph edges
@@ -137,9 +139,28 @@ def multiway_partition(G, num_partitions):
 
 
 # Main Execution
-g = nx.erdos_renyi_graph(513, 0.3, 23)
-num_partitions = 5  # Define the number of partitions
-final_partitions, total_edge_cuts = multiway_partition(g, num_partitions)
+# g = nx.erdos_renyi_graph(513, 0.3, 23)
+# num_partitions = 5  # Define the number of partitions
+# final_partitions, total_edge_cuts = multiway_partition(g, num_partitions)
 
-print("Final Partitions:", final_partitions)
-print("Total Edge Cuts:", total_edge_cuts)
+# print("Final Partitions:", final_partitions)
+# print("Total Edge Cuts:", total_edge_cuts)
+
+
+# Run the experiment for different graph sizes
+def run_experiment_for_different_sizes(sizes, p, k):
+    results = {"Graph Size": [], "Edge Cuts": []}
+    for size in sizes:
+        G_er = nx.erdos_renyi_graph(n=size, p=p, seed=42)
+        _, edge_cuts = multiway_partition(G_er, k)
+        results["Graph Size"].append(size)
+        results["Edge Cuts"].append(edge_cuts)
+    return pd.DataFrame(results)
+
+
+sizes = [50, 100, 150, 200, 250]
+probability = 0.3
+num_partitions = 5
+
+experiment_results_HEM = run_experiment_for_different_sizes(sizes, probability, num_partitions)
+sr_save_results_HEM = sr.save_results_to_csv(experiment_results_HEM, "GPP_with_HEM")

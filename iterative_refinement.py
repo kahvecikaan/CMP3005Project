@@ -1,5 +1,9 @@
 import networkx as nx
 import random
+import pandas as pd
+from matplotlib import pyplot as plt
+import save_results as sr
+
 
 def initial_partition(graph, k):
     """
@@ -76,6 +80,18 @@ def calculate_total_edge_cut(graph, partitions):
     return edge_cut
 
 
+def run_experiment_for_different_sizes(sizes, p, k):
+    results = {"Graph Size": [], "Edge Cuts": []}
+    for size in sizes:
+        G_er = nx.erdos_renyi_graph(n=size, p=p, seed=42)
+        partitions = initial_partition(G_er, k)
+        refined_partitions = refine_partitions(G_er, partitions, k)
+        edge_cut = calculate_total_edge_cut(G_er, refined_partitions)
+        results["Graph Size"].append(size)
+        results["Edge Cuts"].append(edge_cut)
+    return pd.DataFrame(results)
+
+
 # Example usage
 G_er = nx.erdos_renyi_graph(n=500, p=0.3)
 k = 5
@@ -85,3 +101,13 @@ edge_cut = calculate_total_edge_cut(G_er, refined_partitions)
 
 print(f"Partitions: {refined_partitions}")
 print(f"Edge cut: {edge_cut}")
+
+
+graph_sizes = [50, 100, 150, 200, 250]
+probability = 0.3
+num_partitions = 5
+
+experiment_results = run_experiment_for_different_sizes(graph_sizes, probability, num_partitions)
+
+# save results to csv
+sr.save_results_to_csv(experiment_results, "iterative_refinement")
