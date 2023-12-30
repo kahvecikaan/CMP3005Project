@@ -1,5 +1,7 @@
 import networkx as nx
 import numpy as np
+import pandas as pd
+import save_results as sr
 from sklearn.cluster import KMeans  # For clustering
 
 # Function to perform spectral partitioning
@@ -93,7 +95,7 @@ def calculate_edge_cuts_between_partitions(graph, partitions):
     return edge_cuts
 
 
-G = nx.erdos_renyi_graph(500, 0.3, seed=41)
+G = nx.erdos_renyi_graph(250, 0.3, seed=42)
 
 # Perform spectral partitioning
 num_partitions = 5
@@ -111,3 +113,21 @@ customKmeansEdgeCuts = calculate_edge_cuts_between_partitions(G, customKmeansPar
 
 print("Total edge cuts between partitions:", edge_cuts)
 print("Total edge cuts between customKmeansPartitions:", customKmeansEdgeCuts)
+
+def run_experiment_for_different_sizes(sizes, p, k):
+    results = {"Graph Size": [], "Edge Cuts": []}
+    for size in sizes:
+        G_er = nx.erdos_renyi_graph(n=size, p=p, seed=42)
+        partitions = spectral_partitioning_with_custom_kmeans(G_er, k)
+        edge_cuts = calculate_edge_cuts_between_partitions(G_er, partitions)
+        results["Graph Size"].append(size)
+        results["Edge Cuts"].append(edge_cuts)
+    return pd.DataFrame(results)
+
+
+sizes = [50, 100, 150, 200, 250]
+probability = 0.3
+num_partitions = 5
+
+experiment_results_SP = run_experiment_for_different_sizes(sizes, probability, num_partitions)
+sr_save_results_SP = sr.save_results_to_csv(experiment_results_SP, "GPP_with_SP")

@@ -1,7 +1,7 @@
 import pandas as pd
 import os
 
-directory = "/Users/kaankahveci/PycharmProjects/cmp3005/experiment_results"
+directory = "/Users/furka/PycharmProjects/CMP3005Project/experiment_results"
 
 
 def save_results_to_csv(data, algorithm_name, directory =directory):
