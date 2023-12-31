@@ -30,7 +30,6 @@ class KMeansCustom:
         return np.argmin(distances, axis=0)
 
 
-
 def spectral_partitioning_with_custom_kmeans(graph, num_partitions):
     adj_matrix = nx.adjacency_matrix(graph).todense()
     laplacian_matrix = nx.laplacian_matrix(graph).todense()#laplacian matrix contains information about the degree of nodes and the adjacency matrix of the original graph
@@ -127,7 +126,6 @@ def run_experiment_for_different_partitions(size, p, partitions_list):
         results["Edge Cuts"].append(edge_cuts)
         print(f"Number of partitions: {k}, Edge cuts: {edge_cuts}")
     return pd.DataFrame(results)
-
 
 
 # Run the experiment for different partitions
