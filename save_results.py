@@ -1,10 +1,9 @@
-import pandas as pd
 import os
 
 directory = "/Users/kaankahveci/PycharmProjects/cmp3005/experiment_results"
 
 
-def save_results_to_csv(data, algorithm_name, directory =directory):
+def save_results_to_csv(data, algorithm_name, directory=directory):
     # Ensure directory exists
     if not os.path.exists(directory):
         os.makedirs(directory)

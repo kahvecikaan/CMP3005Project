@@ -147,20 +147,41 @@ def multiway_partition(G, num_partitions):
 # print("Total Edge Cuts:", total_edge_cuts)
 
 
-# Run the experiment for different graph sizes
 def run_experiment_for_different_sizes(sizes, p, k):
     results = {"Graph Size": [], "Edge Cuts": []}
     for size in sizes:
-        G_er = nx.erdos_renyi_graph(n=size, p=p, seed=42)
+        G_er = nx.erdos_renyi_graph(n=size, p=p)
         _, edge_cuts = multiway_partition(G_er, k)
         results["Graph Size"].append(size)
         results["Edge Cuts"].append(edge_cuts)
     return pd.DataFrame(results)
 
 
+def run_experiment_for_different_partitions(size, p, partitions_list):
+    results = {"Number of Partitions": [], "Edge Cuts": []}
+    G_er = nx.erdos_renyi_graph(n=size, p=p)
+    for k in partitions_list:
+        _, edge_cuts = multiway_partition(G_er, k)
+        results["Number of Partitions"].append(k)
+        results["Edge Cuts"].append(edge_cuts)
+    return pd.DataFrame(results)
+
+
+# Run the experiment for different graph sizes
 sizes = [50, 100, 150, 200, 250]
 probability = 0.3
 num_partitions = 5
 
 experiment_results_HEM = run_experiment_for_different_sizes(sizes, probability, num_partitions)
 sr_save_results_HEM = sr.save_results_to_csv(experiment_results_HEM, "GPP_with_HEM")
+
+
+# Run the experiment for different partitions
+size = 300
+probability = 0.3
+partitions_list = [2, 3, 4, 5]
+
+experiment_results_HEM_diff_par = run_experiment_for_different_partitions(size, probability, partitions_list)
+
+# Save results to CSV for the HEM algorithm
+sr.save_results_to_csv(experiment_results_HEM_diff_par, "GPP_with_HEM_different_partition")
