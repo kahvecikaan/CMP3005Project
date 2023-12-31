@@ -2,26 +2,6 @@ import networkx as nx
 import numpy as np
 import pandas as pd
 import save_results as sr
-from sklearn.cluster import KMeans  # For clustering
-
-# Function to perform spectral partitioning
-# def spectral_partitioning(graph, num_partitions):
-#     adj_matrix = nx.adjacency_matrix(graph).todense()
-#     laplacian_matrix = nx.laplacian_matrix(graph).todense() #laplacian matrix contains information about the degree of nodes and the adjacency matrix of the original graph
-#     eigenvalues, eigenvectors = np.linalg.eigh(laplacian_matrix)
-#     fiedler_vector = eigenvectors[:, 1] #in accordance to the graph laplacian facts and courant-fischer minmax theorem the q1(eigenvector of the SECOND smallest eigenvalue)
-#     # is chosen. fiedler vector holds information about the algebraic connectibity of the graph, which can be further used in clustering algorithms to partition the graph
-#
-#     kmeans = KMeans(n_clusters=num_partitions)
-#     kmeans.fit(fiedler_vector.reshape(-1, 1))
-#     labels = kmeans.labels_
-#
-#     partitions = []
-#     for i in range(num_partitions):
-#         partition = [node for node, label in zip(graph.nodes(), labels) if label == i]
-#         partitions.append(partition)
-#
-#     return partitions
 
 
 class KMeansCustom:
@@ -50,19 +30,18 @@ class KMeansCustom:
         return np.argmin(distances, axis=0)
 
 
-
 def spectral_partitioning_with_custom_kmeans(graph, num_partitions):
     adj_matrix = nx.adjacency_matrix(graph).todense()
     laplacian_matrix = nx.laplacian_matrix(graph).todense()#laplacian matrix contains information about the degree of nodes and the adjacency matrix of the original graph
     eigenvalues, eigenvectors = np.linalg.eigh(laplacian_matrix)
-    fiedler_vector = eigenvectors[:, 1] #in accordance to the graph laplacian facts and courant-fischer minmax theorem the q1(eigenvector of the SECOND smallest eigenvalue)
+    fiedler_vector = eigenvectors[:, 1] # in accordance to the graph laplacian facts and courant-fischer minmax theorem the q1(eigenvector of the SECOND smallest eigenvalue)
     # is chosen. fiedler vector holds information about the algebraic connectivity of the graph, which can be further used in clustering algorithms to partition the graph
 
     fiedler_vector = fiedler_vector.reshape(-1, 1)
 
     # Create and fit KMeansCustom
     kmeans = KMeansCustom(n_clusters=num_partitions)
-    kmeans.fit(fiedler_vector) #we then call the kmeans clustering algorithm on the fiedler vector to use it's components as dimensions
+    kmeans.fit(fiedler_vector) # we then call the kmeans clustering algorithm on the fiedler vector to use it's components as dimensions
     # and cluster the nodes based on their algebraic connectivity.
 
     labels = kmeans.predict(fiedler_vector)
@@ -109,43 +88,51 @@ for i in range(num_partitions):
 
 
 # edge_cuts = calculate_edge_cuts_between_partitions(G, partitions)
-customKmeansEdgeCuts = calculate_edge_cuts_between_partitions(G, customKmeansPartitions)
+# customKmeansEdgeCuts = calculate_edge_cuts_between_partitions(G, customKmeansPartitions)
 
 # print("Total edge cuts between partitions:", edge_cuts)
-print("Total edge cuts between customKmeansPartitions:", customKmeansEdgeCuts)
+# print("Total edge cuts between customKmeansPartitions:", customKmeansEdgeCuts)
+
 
 def run_experiment_for_different_sizes(sizes, p, k):
     results = {"Graph Size": [], "Edge Cuts": []}
     for size in sizes:
-        G_er = nx.erdos_renyi_graph(n=size, p=p, seed=42)
+        G_er = nx.erdos_renyi_graph(n=size, p=p, seed= 42)
         partitions = spectral_partitioning_with_custom_kmeans(G_er, k)
         edge_cuts = calculate_edge_cuts_between_partitions(G_er, partitions)
         results["Graph Size"].append(size)
         results["Edge Cuts"].append(edge_cuts)
     return pd.DataFrame(results)
 
-def run_experiment_for_different_partitions(size, p, ks):
-    results = {"Partitions": [], "Edge Cuts": []}
-    for k in ks:
-        G_er = nx.erdos_renyi_graph(n=size, p=p, seed=42)
-        partitions = spectral_partitioning_with_custom_kmeans(G_er, k)
-        edge_cuts = calculate_edge_cuts_between_partitions(G_er, partitions)
-        results["Partitions"].append(k)
-        results["Edge Cuts"].append(edge_cuts)
-    return pd.DataFrame(results)
 
+# Run the experiment for different graph sizes
 
 sizes = [50, 100, 150, 200, 250]
 probability = 0.3
 num_partitions = 5
 
 experiment_results_SP = run_experiment_for_different_sizes(sizes, probability, num_partitions)
-sr_save_results_SP = sr.save_results_to_csv(experiment_results_SP, "GPP_with_SP")
+sr.save_results_to_csv(experiment_results_SP, "spectral_partitioning")
 
 
-size = 250
+def run_experiment_for_different_partitions(size, p, partitions_list):
+    results = {"Number of Partitions": [], "Edge Cuts": []}
+    G_er = nx.erdos_renyi_graph(n=size, p=p)
+    print(f"Running spectral partitioning for graph size {size} with different number of partitions:")
+    for k in partitions_list:
+        partitions = spectral_partitioning_with_custom_kmeans(G_er, k)
+        edge_cuts = calculate_edge_cuts_between_partitions(G_er, partitions)
+        results["Number of Partitions"].append(k)
+        results["Edge Cuts"].append(edge_cuts)
+        print(f"Number of partitions: {k}, Edge cuts: {edge_cuts}")
+    return pd.DataFrame(results)
+
+
+# Run the experiment for different partitions
+size = 300
 probability = 0.3
-nums_partitions = [2, 3, 4, 5]
+partitions_list = [2, 3, 4, 5]
 
-experiment_results_SP_partitions = run_experiment_for_different_partitions(size, probability, nums_partitions)
-sr_save_results_SP_partitions = sr.save_results_to_csv(experiment_results_SP, "GPP_with_SP_partitions")
+experiment_results_SP = run_experiment_for_different_partitions(size, probability, partitions_list)
+
+sr.save_results_to_csv(experiment_results_SP, "spectral_partitioning_different_partition")

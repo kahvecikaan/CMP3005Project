@@ -83,11 +83,23 @@ def calculate_total_edge_cut(graph, partitions):
 def run_experiment_for_different_sizes(sizes, p, k):
     results = {"Graph Size": [], "Edge Cuts": []}
     for size in sizes:
-        G_er = nx.erdos_renyi_graph(n=size, p=p, seed=42)
+        G_er = nx.erdos_renyi_graph(n=size, p=p)
         partitions = initial_partition(G_er, k)
         refined_partitions = refine_partitions(G_er, partitions, k)
         edge_cut = calculate_total_edge_cut(G_er, refined_partitions)
         results["Graph Size"].append(size)
+        results["Edge Cuts"].append(edge_cut)
+    return pd.DataFrame(results)
+
+
+def run_experiment_for_different_partitions(size, p, partitions_list):
+    results = {"Number of Partitions": [], "Edge Cuts": []}
+    G_er = nx.erdos_renyi_graph(n=size, p=p)
+    for k in partitions_list:
+        initial_parts = initial_partition(G_er, k)
+        refined_partitions = refine_partitions(G_er, initial_parts, k)
+        edge_cut = calculate_total_edge_cut(G_er, refined_partitions)
+        results["Number of Partitions"].append(k)
         results["Edge Cuts"].append(edge_cut)
     return pd.DataFrame(results)
 
@@ -103,6 +115,7 @@ print(f"Partitions: {refined_partitions}")
 print(f"Edge cut: {edge_cut}")
 
 
+# Run the experiment for different graph sizes
 graph_sizes = [50, 100, 150, 200, 250]
 probability = 0.3
 num_partitions = 5
@@ -111,3 +124,14 @@ experiment_results = run_experiment_for_different_sizes(graph_sizes, probability
 
 # save results to csv
 sr.save_results_to_csv(experiment_results, "iterative_refinement")
+
+
+# Run the experiment for different number of partitions
+size = 300
+probability = 0.3
+partitions_list = [2, 3, 4, 5]
+
+experiment_results_iterative = run_experiment_for_different_partitions(size, probability, partitions_list)
+
+# save results to csv
+sr.save_results_to_csv(experiment_results_iterative, "iterative_refinement_different_partition")
