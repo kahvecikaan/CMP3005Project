@@ -1,9 +1,13 @@
 import random
 import networkx as nx
+import save_results as sr
+import pandas as pd
+
 
 def assign_default_weights(G):
     for u, v in G.edges():
         G[u][v]['weight'] = 1
+
 
 def heavy_edge_matching(g):
     matched = set()
@@ -15,6 +19,7 @@ def heavy_edge_matching(g):
             matched.update([u, v])
 
     return matchings
+
 
 def coarsen_graph(G, matchings):
     coarse_G = nx.Graph()
@@ -41,6 +46,7 @@ def coarsen_graph(G, matchings):
 
     return coarse_G, mapping
 
+
 def partition_graph_balanced(G, num_partitions):
     partitions = {i: set() for i in range(num_partitions)}
     nodes = list(G.nodes())
@@ -57,6 +63,7 @@ def calculate_initial_edge_cuts(G):
             edge_cuts[(u, v)] = edge_cuts.get((u, v), 0) + 1
     return edge_cuts
 
+
 def update_edge_cuts(G, edge_cuts, node):
     for neighbor in G.neighbors(node):
         if G.nodes[node]['partition'] != G.nodes[neighbor]['partition']:
@@ -64,21 +71,24 @@ def update_edge_cuts(G, edge_cuts, node):
         else:
             edge_cuts.pop((node, neighbor), None)
 
-def refine_partitions_balanced(G, partitions, num_iterations=10):
-    for node in G.nodes:
-        for part_id, nodes in partitions.items():
-            if node in nodes:
-                G.nodes[node]['partition'] = part_id
-                break
 
+def get_node_edge_cut_contribution(G, node):
+    contribution = 0
+    for neighbor in G.neighbors(node):
+        if G.nodes[node]['partition'] != G.nodes[neighbor]['partition']:
+            contribution += 1
+    return contribution
+
+
+def refine_partitions(G, partitions, num_iterations=10):
     edge_cuts = calculate_initial_edge_cuts(G)
 
     for _ in range(num_iterations):
         for part_id, nodes in list(partitions.items()):
             for node in list(nodes):
-                if len(nodes) > 1:  # Ensure partition isn't left empty
-                    current_cut = len(edge_cuts)
-                    best_move = (None, current_cut)
+                if len(nodes) > 1:  # Ensure not emptying a partition
+                    best_move = (None, len(edge_cuts))
+                    current_contribution = get_node_edge_cut_contribution(G, node)
 
                     for other_part_id in partitions:
                         if other_part_id != part_id:
@@ -87,23 +97,23 @@ def refine_partitions_balanced(G, partitions, num_iterations=10):
                             G.nodes[node]['partition'] = other_part_id
                             update_edge_cuts(G, edge_cuts, node)
 
-                            new_cut = len(edge_cuts)
-                            if new_cut < best_move[1]:
-                                best_move = (other_part_id, new_cut)
+                            new_contribution = get_node_edge_cut_contribution(G, node)
+                            if new_contribution < current_contribution:
+                                best_move = (other_part_id, len(edge_cuts))
 
-                            # Revert the move
                             partitions[other_part_id].remove(node)
                             partitions[part_id].add(node)
                             G.nodes[node]['partition'] = part_id
                             update_edge_cuts(G, edge_cuts, node)
 
-                    # Make the best move
                     if best_move[0] is not None:
                         partitions[part_id].remove(node)
                         partitions[best_move[0]].add(node)
                         G.nodes[node]['partition'] = best_move[0]
                         update_edge_cuts(G, edge_cuts, node)
+
     return partitions
+
 
 def uncoarsen_and_refine(partitions, mapping):
     inverse_mapping = {}
@@ -119,6 +129,7 @@ def uncoarsen_and_refine(partitions, mapping):
 
     return original_partitions
 
+
 def calculate_edge_cuts(G, partitions):
     edge_cuts = 0
     seen_edges = set()
@@ -133,40 +144,71 @@ def calculate_edge_cuts(G, partitions):
 
     return edge_cuts
 
+
 def multiway_partition(G, num_partitions):
     assign_default_weights(G)
     matchings = heavy_edge_matching(G)
     coarse_G, mapping = coarsen_graph(G, matchings)
     partitions = partition_graph_balanced(coarse_G, num_partitions)
+
+    for part_id, nodes in partitions.items():
+        for node in nodes:
+            coarse_G.nodes[node]['partition'] = part_id
+
     original_partitions = uncoarsen_and_refine(partitions, mapping)
-    refined_partitions = refine_partitions_balanced(G, original_partitions)
+    for part_id, nodes in original_partitions.items():
+        for node in nodes:
+            G.nodes[node]['partition'] = part_id
+
+    refined_partitions = refine_partitions(G, original_partitions)
     edge_cuts = calculate_edge_cuts(G, refined_partitions)
     return refined_partitions, edge_cuts
 
 
-# test the algorithm
-G = nx.erdos_renyi_graph(400, 0.3)
-num_partitions = 5
-partitions, edge_cuts = multiway_partition(G, num_partitions)
-print(f"Partitions: {partitions}")
-print(f"Edge cuts: {edge_cuts}")
+# Test the algorithm
+# G = nx.erdos_renyi_graph(500, 0.3)
+# num_partitions = 5
+# partitions, edge_cuts = multiway_partition(G, num_partitions)
+# print(f"Partitions: {partitions}")
+# print(f"Edge cuts: {edge_cuts}")
+
+
+def run_experiment_for_different_sizes(sizes, p, k):
+    results = {"Graph Size": [], "Edge Cuts": []}
+    for size in sizes:
+        G_er = nx.erdos_renyi_graph(n=size, p=p)
+        _, edge_cuts = multiway_partition(G_er, k)
+        results["Graph Size"].append(size)
+        results["Edge Cuts"].append(edge_cuts)
+    return pd.DataFrame(results)
+
+
+def run_experiment_for_different_partitions(size, p, partitions_list):
+    results = {"Number of Partitions": [], "Edge Cuts": []}
+    G_er = nx.erdos_renyi_graph(n=size, p=p)
+    for k in partitions_list:
+        _, edge_cuts = multiway_partition(G_er, k)
+        results["Number of Partitions"].append(k)
+        results["Edge Cuts"].append(edge_cuts)
+    return pd.DataFrame(results)
 
 
 # Run the experiment for different graph sizes
-# sizes = [50, 100, 150, 200, 250]
-# probability = 0.3
-# num_partitions = 5
+sizes = [100, 200, 300, 400, 500]
+probability = 0.3
+num_partitions = 5
 
-# experiment_results_HEM = run_experiment_for_different_sizes(sizes, probability, num_partitions)
-# sr_save_results_HEM = sr.save_results_to_csv(experiment_results_HEM, "GPP_with_HEM")
+experiment_results_HEM = run_experiment_for_different_sizes(sizes, probability, num_partitions)
+sr_save_results_HEM = sr.save_results_to_csv(experiment_results_HEM, "GPP_with_HEM")
 
 
 # Run the experiment for different partitions
-# size = 300
-# probability = 0.3
-# partitions_list = [2, 3, 4, 5]
+size = 300
+probability = 0.3
+partitions_list = [2, 3, 4, 5]
 
-# experiment_results_HEM_diff_par = run_experiment_for_different_partitions(size, probability, partitions_list)
+experiment_results_HEM_diff_par = run_experiment_for_different_partitions(size, probability, partitions_list)
 
 # Save results to CSV for the HEM algorithm
-# sr.save_results_to_csv(experiment_results_HEM_diff_par, "GPP_with_HEM_different_partition")
+sr.save_results_to_csv(experiment_results_HEM_diff_par, "GPP_with_HEM_different_partition")
+

@@ -107,7 +107,7 @@ def run_experiment_for_different_sizes(sizes, p, k):
 
 # Run the experiment for different graph sizes
 
-sizes = [50, 100, 150, 200, 250]
+sizes = [100, 200, 300, 400, 500]
 probability = 0.3
 num_partitions = 5
 

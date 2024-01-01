@@ -116,7 +116,7 @@ print(f"Edge cut: {edge_cut}")
 
 
 # Run the experiment for different graph sizes
-graph_sizes = [50, 100, 150, 200, 250]
+graph_sizes = [100, 200, 300, 400, 500]
 probability = 0.3
 num_partitions = 5
 
@@ -135,3 +135,4 @@ experiment_results_iterative = run_experiment_for_different_partitions(size, pro
 
 # save results to csv
 sr.save_results_to_csv(experiment_results_iterative, "iterative_refinement_different_partition")
+
