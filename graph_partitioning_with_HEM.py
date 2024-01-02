@@ -4,9 +4,9 @@ import save_results as sr
 import pandas as pd
 
 
-def assign_default_weights(G):
-    for u, v in G.edges():
-        G[u][v]['weight'] = 1
+def assign_default_weights(g):
+    for u, v in g.edges():
+        g[u][v]['weight'] = 1
 
 
 def heavy_edge_matching(g):
@@ -55,6 +55,7 @@ def partition_graph_balanced(G, num_partitions):
     for i, node in enumerate(nodes):
         partitions[i % num_partitions].add(node)
     return partitions
+
 
 def calculate_initial_edge_cuts(G):
     edge_cuts = {}
