@@ -1,7 +1,6 @@
 import networkx as nx
 import random
 import pandas as pd
-from matplotlib import pyplot as plt
 import save_results as sr
 
 
